@@ -6,8 +6,8 @@
 
 body {
   overflow: hidden;
-  font-family: "Orbitron", sans-serif; /* Font yang lebih modern/futuristik */
-  background-color: #000;
+  font-family: "Orbitron", sans-serif;
+  background-color: #1a1a1a;  /* Updated to lighter background */
 }
 
 #game-container {
@@ -16,15 +16,15 @@ body {
   position: relative;
 }
 
-/* Dark Corridor Background */
+/* Temple Background - Updated to be brighter */
 .temple-background {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)),
-    repeating-linear-gradient(45deg, #0a0a0a 0%, #1a1a1a 10%);
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+    repeating-linear-gradient(45deg, #1a1a1a 0%, #2a2a2a 10%);
   z-index: -1;
 }
 
@@ -36,7 +36,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #000;
+  background: #1a1a1a;  /* Updated from black */
   color: #ffffff;
   font-family: "Orbitron", sans-serif;
   font-size: 24px;
@@ -47,7 +47,7 @@ body {
   animation: pulse 1.5s infinite;
 }
 
-/* Menu Screen */
+/* Menu Screen - Updated overlay opacity */
 #menu-screen,
 #game-ui,
 #game-over {
@@ -58,7 +58,7 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.4);
   color: #ffffff;
 }
 
@@ -80,15 +80,15 @@ body {
   gap: 20px;
 }
 
-/* Buttons */
+/* Buttons - Updated with brighter colors */
 button {
   padding: 15px 40px;
   margin: 15px;
   font-size: 20px;
   cursor: pointer;
   font-family: "Orbitron", sans-serif;
-  background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
-  border: 2px solid #4a4a4a;
+  background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
+  border: 2px solid #5a5a5a;
   color: #ffffff;
   border-radius: 5px;
   transition: all 0.3s ease;
@@ -96,21 +96,21 @@ button {
   min-width: 200px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 10px rgba(74, 74, 74, 0.3);
+  box-shadow: 0 0 10px rgba(90, 90, 90, 0.3);
 }
 
 button:hover {
   transform: scale(1.05);
-  background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
-  box-shadow: 0 0 20px rgba(74, 74, 74, 0.5);
-  border-color: #6a6a6a;
+  background: linear-gradient(45deg, #3a3a3a, #4a4a4a);
+  box-shadow: 0 0 20px rgba(90, 90, 90, 0.5);
+  border-color: #7a7a7a;
 }
 
 button:active {
   transform: scale(0.95);
 }
 
-/* Game UI */
+/* Game UI - Updated with brighter backgrounds */
 #game-ui {
   pointer-events: none;
 }
@@ -122,14 +122,14 @@ button:active {
   padding: 15px 25px;
   background: linear-gradient(
     45deg,
-    rgba(26, 26, 26, 0.9),
-    rgba(42, 42, 42, 0.9)
+    rgba(42, 42, 42, 0.9),
+    rgba(58, 58, 58, 0.9)
   );
   color: #ffffff;
   border-radius: 5px;
   font-size: 20px;
-  border: 1px solid #4a4a4a;
-  box-shadow: 0 0 10px rgba(74, 74, 74, 0.3);
+  border: 1px solid #5a5a5a;
+  box-shadow: 0 0 10px rgba(90, 90, 90, 0.3);
 }
 
 #score {
@@ -145,7 +145,7 @@ button:active {
   font-size: 48px;
   color: #ffffff;
   margin-bottom: 20px;
-  text-shadow: 0 0 10px #4a4a4a;
+  text-shadow: 0 0 10px #5a5a5a;
 }
 
 #game-over p {
@@ -153,14 +153,14 @@ button:active {
   margin-bottom: 30px;
 }
 
-/* Instructions Modal */
+/* Instructions Modal - Updated with brighter colors */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -168,10 +168,10 @@ button:active {
 }
 
 .modal-content {
-  background: linear-gradient(45deg, #1a1a1a, #2a2a2a);
+  background: linear-gradient(45deg, #2a2a2a, #3a3a3a);
   padding: 30px;
   border-radius: 5px;
-  border: 2px solid #4a4a4a;
+  border: 2px solid #5a5a5a;
   text-align: center;
   color: #ffffff;
   max-width: 500px;
@@ -180,7 +180,7 @@ button:active {
 .modal-content h2 {
   font-size: 32px;
   margin-bottom: 20px;
-  text-shadow: 0 0 10px #4a4a4a;
+  text-shadow: 0 0 10px #5a5a5a;
 }
 
 .instructions-text {
@@ -199,8 +199,8 @@ button:active {
 .key {
   display: inline-block;
   padding: 5px 10px;
-  background: #2a2a2a;
-  border: 1px solid #4a4a4a;
+  background: #3a3a3a;
+  border: 1px solid #5a5a5a;
   border-radius: 5px;
   margin: 0 5px;
   min-width: 60px;
@@ -218,10 +218,10 @@ button:active {
 /* Animations */
 @keyframes glow {
   from {
-    text-shadow: 0 0 10px #4a4a4a, 0 0 20px #2a2a2a, 0 0 30px #1a1a1a;
+    text-shadow: 0 0 10px #5a5a5a, 0 0 20px #3a3a3a, 0 0 30px #2a2a2a;
   }
   to {
-    text-shadow: 0 0 20px #4a4a4a, 0 0 30px #2a2a2a, 0 0 40px #1a1a1a;
+    text-shadow: 0 0 20px #5a5a5a, 0 0 30px #3a3a3a, 0 0 40px #2a2a2a;
   }
 }
 
