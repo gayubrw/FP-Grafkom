@@ -1,5 +1,6 @@
 export class ScoreManager {
   constructor() {
+    this.distanceTraveled = 0;
     this.score = 0;
     this.highScore = parseInt(localStorage.getItem("highScore")) || 0;
     this.scoreElement = document.getElementById("score");
@@ -7,8 +8,11 @@ export class ScoreManager {
     this.updateDisplay();
   }
 
-  incrementScore(amount = 1) {
-    this.score += amount;
+  updateDistance(distance) {
+    this.distanceTraveled = distance;
+    // Convert distance to score (1 point per meter)
+    this.score = Math.floor(Math.abs(this.distanceTraveled));
+    
     if (this.score > this.highScore) {
       this.highScore = this.score;
       localStorage.setItem("highScore", this.highScore);
@@ -17,13 +21,14 @@ export class ScoreManager {
   }
 
   resetScore() {
+    this.distanceTraveled = 0;
     this.score = 0;
     this.updateDisplay();
   }
 
   updateDisplay() {
-    this.scoreElement.textContent = `Score: ${this.score}`;
-    this.highScoreElement.textContent = `High Score: ${this.highScore}`;
+    this.scoreElement.textContent = `Distance: ${this.score}m`;
+    this.highScoreElement.textContent = `Best: ${this.highScore}m`;
   }
 
   getScore() {

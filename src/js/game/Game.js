@@ -26,17 +26,39 @@ export class Game {
         this.obstacles = [];
         this.isGameRunning = false;
         this.nextSpawnZ = -100;
-        this.baseSpawnInterval = 20;
-        this.minSpawnInterval = 15;
-        this.spawnIntervalReduction = 0.2;
-        this.lastLaneUsed = null;
         this.difficultyLevel = 1;
-        this.score = 0;
-        this.highScore = parseInt(localStorage.getItem("highScore")) || 0;
 
+        // Pattern system
+        this.spawnPatterns = [
+            // Single obstacle patterns
+            [[-4], [0], [4]],
+            
+            // Double obstacle patterns (challenging but possible)
+            [[-4, 0], [0, 4], [-4, 4]],
+            
+            // Alternating patterns
+            [[-4], [4], [-4]],
+            [[4], [-4], [4]],
+            [[0], [-4], [0], [4]],
+            
+            // Zigzag patterns
+            [[-4], [0], [4], [0]],
+            [[4], [0], [-4], [0]]
+        ];
+        this.currentPattern = null;
+        this.currentPatternIndex = 0;
+        this.basePatternDelay = 1500;
+        this.minPatternDelay = 800;
+        this.lastPatternTime = 0;
+
+        // Distance tracking
+        this.distanceTraveled = 0;
+        this.lastDistanceUpdate = 0;
+        this.distanceUpdateInterval = 0.1;
+        
         // Environment movement settings
         this.environmentSpeed = 0.3;
-        this.parallaxFactor = 0.8; // For background elements
+        this.parallaxFactor = 0.8;
         
         // Store environment objects
         this.environmentObjects = {
@@ -92,16 +114,16 @@ export class Game {
     }
 
     setupLights() {
-        // Main ambient light for base illumination
+        // Main ambient light
         const ambientLight = new THREE.AmbientLight(0xffffff, 2.0);
         this.scene.add(ambientLight);
     
-        // Main directional light (sun-like)
+        // Main directional light
         const mainLight = new THREE.DirectionalLight(0xffffff, 3.0);
         mainLight.position.set(5, 30, 10);
         mainLight.castShadow = true;
         
-        // Enhanced shadow configuration
+        // Shadow configuration
         mainLight.shadow.camera.near = 0.1;
         mainLight.shadow.camera.far = 200;
         mainLight.shadow.camera.left = -30;
@@ -115,11 +137,11 @@ export class Game {
         
         this.scene.add(mainLight);
     
-        // Hemisphere light for natural sky-ground reflection
+        // Hemisphere light
         const hemisphereLight = new THREE.HemisphereLight(0x87CEEB, 0x4B4B4B, 1.8);
         this.scene.add(hemisphereLight);
     
-        // Additional accent lights
+        // Accent lights
         const leftAccent = new THREE.SpotLight(0xff7f00, 3);
         leftAccent.position.set(-15, 20, 0);
         leftAccent.angle = Math.PI / 6;
@@ -134,7 +156,7 @@ export class Game {
         rightAccent.decay = 1.5;
         this.scene.add(rightAccent);
         
-        // Player spotlight for dramatic effect
+        // Player spotlight
         const playerLight = new THREE.SpotLight(0xffffff, 2.5);
         playerLight.position.set(0, 15, 5);
         playerLight.target.position.set(0, 0, 0);
@@ -150,7 +172,7 @@ export class Game {
         this.scene.background = new THREE.Color(0x87CEEB);
         this.scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
 
-        // Temple walls - Create multiple segments
+        // Temple walls
         const wallGeometry = new THREE.BoxGeometry(2, 10, 50, 1, 5, 20);
         const wallMaterial = new THREE.MeshPhongMaterial({
             color: 0xA0A0A0,
@@ -159,9 +181,8 @@ export class Game {
             bumpScale: 0.5
         });
 
-        // Create multiple wall segments
+        // Create wall segments
         for (let z = -100; z <= 100; z += 50) {
-            // Left wall segments
             const leftWall = new THREE.Mesh(wallGeometry, wallMaterial);
             leftWall.position.set(-11, 5, z);
             leftWall.castShadow = true;
@@ -169,7 +190,6 @@ export class Game {
             this.scene.add(leftWall);
             this.environmentObjects.walls.push(leftWall);
 
-            // Right wall segments
             const rightWall = new THREE.Mesh(wallGeometry, wallMaterial);
             rightWall.position.set(11, 5, z);
             rightWall.castShadow = true;
@@ -178,7 +198,6 @@ export class Game {
             this.environmentObjects.walls.push(rightWall);
         }
 
-        // Add pillars and decorations
         this.addPillars();
         this.addDecorations();
     }
@@ -191,23 +210,19 @@ export class Game {
             shininess: 30
         });
 
-        // Create pillars at regular intervals
         for (let z = -100; z <= 100; z += 10) {
-            // Left pillars
             const leftPillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
             leftPillar.position.set(-9, 5, z);
             leftPillar.castShadow = true;
             this.scene.add(leftPillar);
             this.environmentObjects.pillars.push(leftPillar);
 
-            // Right pillars
             const rightPillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
             rightPillar.position.set(9, 5, z);
             rightPillar.castShadow = true;
             this.scene.add(rightPillar);
             this.environmentObjects.pillars.push(rightPillar);
 
-            // Add torches to pillars
             const leftTorch = this.createTorch(-9, z);
             const rightTorch = this.createTorch(9, z);
             if (leftTorch) this.environmentObjects.torches.push(leftTorch);
@@ -216,7 +231,6 @@ export class Game {
     }
 
     createTorch(x, z) {
-        // Torch base
         const torchGroup = new THREE.Group();
         const torchGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1, 8);
         const torchMaterial = new THREE.MeshPhongMaterial({
@@ -225,16 +239,13 @@ export class Game {
         const torch = new THREE.Mesh(torchGeometry, torchMaterial);
         torchGroup.add(torch);
 
-        // Torch flame (point light)
         const torchLight = new THREE.PointLight(0xff6600, 2, 10);
         torchLight.position.y = 1;
         torchGroup.add(torchLight);
 
-        // Position the torch group
         torchGroup.position.set(x * 1.1, 8, z);
         this.scene.add(torchGroup);
 
-        // Add flame animation
         const animate = () => {
             if (this.isGameRunning) {
                 torchLight.intensity = 1.5 + Math.random() * 1;
@@ -254,7 +265,6 @@ export class Game {
             shininess: 100
         });
 
-        // Add decorative elements along the walls
         for (let z = -100; z <= 100; z += 10) {
             const leftDecor = new THREE.Mesh(decorGeometry, decorMaterial);
             leftDecor.position.set(-8.5, 1, z);
@@ -269,22 +279,17 @@ export class Game {
     }
 
     setupGround() {
-        // Ground settings
-        this.groundSpeed = this.environmentSpeed * 1.5; // Increased ground speed
-        this.groundTileLength = 100; // Increased tile length for smoother movement
+        this.groundSpeed = this.environmentSpeed * 1.5;
+        this.groundTileLength = 100;
 
-        // Extended generation range
         this.groundGenerationRange = {
             start: -200,
             end: 200
         };
 
-        // Create brick texture
         const brickTexture = this.createBrickTexture();
         
-        // Create ground segments with extended range
         for (let z = this.groundGenerationRange.start; z <= this.groundGenerationRange.end; z += this.groundTileLength) {
-            // Main ground
             const groundGeometry = new THREE.PlaneGeometry(20, this.groundTileLength);
             const groundMaterial = new THREE.MeshStandardMaterial({ 
                 map: brickTexture,
@@ -297,18 +302,17 @@ export class Game {
             ground.rotation.x = -Math.PI / 2;
             ground.position.z = z;
             ground.receiveShadow = true;
-            ground.isGround = true; // Mark as ground object
+            ground.isGround = true;
             this.scene.add(ground);
             this.environmentObjects.grounds.push(ground);
 
-            // Path
             const pathGeometry = new THREE.PlaneGeometry(4, this.groundTileLength);
             const pathMaterial = this.createPathMaterial();
             const path = new THREE.Mesh(pathGeometry, pathMaterial);
             path.rotation.x = -Math.PI / 2;
             path.position.set(0, 0.01, z);
             path.receiveShadow = true;
-            path.isGround = true; // Mark as ground object
+            path.isGround = true;
             this.scene.add(path);
             this.environmentObjects.grounds.push(path);
         }
@@ -320,7 +324,6 @@ export class Game {
         canvas.height = 256;
         const ctx = canvas.getContext('2d');
 
-        // Draw brick pattern
         ctx.fillStyle = '#1a1a1a';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -373,11 +376,9 @@ export class Game {
 
     updateEnvironment() {
         const moveAndReset = (obj, resetDistance, speedFactor = 1) => {
-            // Use groundSpeed for ground objects, environmentSpeed for others
             const speed = obj.isGround ? this.groundSpeed : this.environmentSpeed;
             obj.position.z += speed * speedFactor;
             
-            // Reset position with extended range for ground
             if (obj.position.z > resetDistance) {
                 const resetRange = obj.isGround ? 
                     (this.groundGenerationRange.end - this.groundGenerationRange.start) :
@@ -415,42 +416,150 @@ export class Game {
     spawnObstacle() {
         if (!this.isGameRunning) return;
 
-        const lanes = [-4, 0, 4];
-        const validLanes = this.lastLaneUsed !== null && this.difficultyLevel === 1 
-            ? lanes.filter(lane => lane !== this.lastLaneUsed)
-            : lanes;
+        const now = performance.now();
+        
+        // Start new pattern if needed
+        if (!this.currentPattern || this.currentPatternIndex >= this.currentPattern.length) {
+            // Calculate delay based on difficulty and distance
+            const distanceReduction = Math.min(700, Math.abs(this.distanceTraveled) * 0.5);
+            const difficultyReduction = (this.difficultyLevel - 1) * 200;
+            const currentDelay = Math.max(
+                this.minPatternDelay,
+                this.basePatternDelay - distanceReduction - difficultyReduction
+            );
 
-        const lane = validLanes[Math.floor(Math.random() * validLanes.length)];
-        this.lastLaneUsed = lane;
+            // Check if enough time has passed since last pattern
+            if (now - this.lastPatternTime < currentDelay) {
+                setTimeout(() => this.spawnObstacle(), 100);
+                return;
+            }
 
-        const obstacle = new Obstacle(this.scene, {
-            x: lane,
-            y: 0,
-            z: this.nextSpawnZ
+            // Select new pattern based on difficulty
+            let availablePatterns;
+            if (this.difficultyLevel === 1) {
+                // Easy patterns (single obstacles)
+                availablePatterns = this.spawnPatterns.slice(0, 3);
+            } else if (this.difficultyLevel === 2) {
+                // Medium patterns (single + alternating)
+                availablePatterns = this.spawnPatterns.slice(0, 5);
+            } else {
+                // All patterns available
+                availablePatterns = this.spawnPatterns;
+            }
+
+            this.currentPattern = availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+            this.currentPatternIndex = 0;
+            this.lastPatternTime = now;
+        }
+
+        // Get current lane(s) from pattern
+        const currentLanes = this.currentPattern[this.currentPatternIndex];
+        
+        // Spawn obstacles for each lane in the current pattern step
+        currentLanes.forEach(lane => {
+            const obstacle = new Obstacle(this.scene, {
+                x: lane,
+                y: 0,
+                z: this.nextSpawnZ
+            });
+
+            // Dynamic speed based on distance and difficulty
+            const baseSpeed = 0.35;
+            const speedIncrease = 0.08 * (this.difficultyLevel - 1);
+            const distanceSpeedBonus = Math.min(0.15, Math.abs(this.distanceTraveled) * 0.0005);
+            obstacle.speed = baseSpeed + speedIncrease + distanceSpeedBonus;
+
+            this.obstacles.push(obstacle);
         });
 
-        // Update obstacle speed based on difficulty
-        const baseSpeed = 0.3;
-        const speedIncrease = 0.05 * (this.difficultyLevel - 1);
-        obstacle.speed = baseSpeed + speedIncrease;
+        // Calculate next spawn position
+        const baseSpawnInterval = 10;
+        const distanceReduction = Math.min(4, Math.abs(this.distanceTraveled) * 0.01);
+        const difficultyReduction = (this.difficultyLevel - 1);
+        const currentSpawnInterval = Math.max(
+            6,  // Minimum spawn interval
+            baseSpawnInterval - distanceReduction - difficultyReduction
+        );
 
-        this.obstacles.push(obstacle);
-
-        // Calculate next spawn interval
-        const scoreReduction = this.scoreManager.getScore() * this.spawnIntervalReduction;
-        const currentSpawnInterval = Math.max(this.minSpawnInterval, this.baseSpawnInterval - scoreReduction);
         this.nextSpawnZ -= currentSpawnInterval;
+        this.currentPatternIndex++;
 
-        // Schedule next spawn
-        const spawnDelay = (currentSpawnInterval / obstacle.speed) * 200;
-        setTimeout(() => this.spawnObstacle(), spawnDelay);
+        // Calculate next spawn time based on current obstacle speed
+        const baseSpeed = 0.35;
+        const speedIncrease = 0.08 * (this.difficultyLevel - 1);
+        const distanceSpeedBonus = Math.min(0.15, Math.abs(this.distanceTraveled) * 0.0005);
+        const currentSpeed = baseSpeed + speedIncrease + distanceSpeedBonus;
+        
+        const nextSpawnDelay = (currentSpawnInterval / currentSpeed) * 150;
+        setTimeout(() => this.spawnObstacle(), nextSpawnDelay);
+    }
+
+    updateDistance() {
+        this.lastDistanceUpdate += this.deltaTime;
+        if (this.lastDistanceUpdate >= this.distanceUpdateInterval) {
+            // Calculate distance traveled (negative because we're moving in -Z direction)
+            this.distanceTraveled -= this.environmentSpeed * this.lastDistanceUpdate * 10;
+            this.scoreManager.updateDistance(this.distanceTraveled);
+            this.lastDistanceUpdate = 0;
+            
+            // Update difficulty based on distance
+            if (Math.abs(this.distanceTraveled) >= 300) {
+                this.difficultyLevel = 3;
+            } else if (Math.abs(this.distanceTraveled) >= 150) {
+                this.difficultyLevel = 2;
+            }
+        }
+    }
+
+    update() {
+        if (!this.isGameRunning) return;
+
+        // Update environment movement
+        this.updateEnvironment();
+
+        // Update distance traveled
+        this.updateDistance();
+
+        // Update player and controls
+        this.controls.update();
+        this.player.update(this.deltaTime);
+
+        // Update obstacles
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            const obstacle = this.obstacles[i];
+            const shouldRemove = obstacle.update();
+
+            // Collision detection
+            const playerBox = this.player.getCollider();
+            const obstacleBox = obstacle.getCollider();
+            
+            if (CollisionDetector.checkCollision(playerBox, obstacleBox) && 
+                playerBox.min.y < obstacleBox.max.y) {
+                this.gameOver();
+                return;
+            }
+
+            if (shouldRemove) {
+                obstacle.remove();
+                this.obstacles.splice(i, 1);
+            }
+        }
+    }
+
+    gameOver() {
+        this.isGameRunning = false;
+        this.menu.showGameOver(this.scoreManager.getScore());
     }
 
     start() {
         this.isGameRunning = true;
         this.scoreManager.resetScore();
+        this.distanceTraveled = 0;
+        this.lastDistanceUpdate = 0;
         this.difficultyLevel = 1;
-        this.lastLaneUsed = null;
+        this.currentPattern = null;
+        this.currentPatternIndex = 0;
+        this.lastPatternTime = 0;
         this.nextSpawnZ = -100;
         
         // Setup initial obstacles
@@ -479,57 +588,16 @@ export class Game {
                 y: 0,
                 z: z
             });
+            
+            obstacle.speed = 0.35; // Base speed for initial obstacles
             this.obstacles.push(obstacle);
         });
     }
 
-    update() {
-        if (!this.isGameRunning) return;
-
-        // Update environment movement
-        this.updateEnvironment();
-
-        // Update player and controls
-        this.controls.update();
-        this.player.update(this.deltaTime);
-
-        // Update obstacles
-        for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            const obstacle = this.obstacles[i];
-            const shouldRemove = obstacle.update();
-
-            // Collision detection
-            const playerBox = this.player.getCollider();
-            const obstacleBox = obstacle.getCollider();
-            
-            if (CollisionDetector.checkCollision(playerBox, obstacleBox) && 
-                playerBox.min.y < obstacleBox.max.y) {
-                this.gameOver();
-                return;
-            }
-
-            if (shouldRemove) {
-                obstacle.remove();
-                this.obstacles.splice(i, 1);
-                this.scoreManager.incrementScore();
-
-                // Update difficulty
-                const score = this.scoreManager.getScore();
-                if (score >= 30) this.difficultyLevel = 3;
-                else if (score >= 15) this.difficultyLevel = 2;
-            }
-        }
-    }
-
-    gameOver() {
-        this.isGameRunning = false;
-        this.menu.showGameOver(this.scoreManager.getScore());
-    }
-
     restart() {
-        // Reset game state - immediately remove all obstacles
+        // Reset game state
         this.obstacles.forEach(obstacle => {
-            obstacle.remove(true); // true for immediate removal
+            obstacle.remove(true);
             this.scene.remove(obstacle.mesh);
         });
         this.obstacles = [];
@@ -537,10 +605,14 @@ export class Game {
         // Reset player
         this.player.reset();
             
-        // Reset spawn system
+        // Reset distance and spawn system
+        this.distanceTraveled = 0;
+        this.lastDistanceUpdate = 0;
         this.nextSpawnZ = -100;
         this.difficultyLevel = 1;
-        this.lastLaneUsed = null;
+        this.currentPattern = null;
+        this.currentPatternIndex = 0;
+        this.lastPatternTime = 0;
 
         // Start new game
         this.start();

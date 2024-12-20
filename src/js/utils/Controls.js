@@ -5,6 +5,7 @@ export class Controls {
       ArrowLeft: false,
       ArrowRight: false,
       Space: false,
+      ArrowUp: false  
     };
 
     this.setupEventListeners();
@@ -33,7 +34,7 @@ export class Controls {
     if (this.keys.ArrowRight) {
       this.player.moveRight();
     }
-    if (this.keys.Space) {
+    if (this.keys.Space || this.keys.ArrowUp) {  
       this.player.jump();
     }
   }
