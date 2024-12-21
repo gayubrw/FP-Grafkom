@@ -41,28 +41,23 @@ export class Player {
         // Load custom 3D model
         const loader = new GLTFLoader();
         loader.load(
-            "/src/assets/alien.glb", // Replace with your model file path
+            "/src/assets/alien.glb",
             (gltf) => {
                 this.model = gltf.scene;
 
-                // Adjust model's scale, position, and shadow
-                this.model.scale.set(1.5, 1.5, 1.5); // Adjust as needed
-                this.model.position.y = 0; // Align with ground
+                this.model.scale.set(1.5, 1.5, 1.5); 
+                this.model.position.y = 0; 
                 this.model.castShadow = true;
-
                 this.model.rotation.y = Math.PI;
 
-                // Add model to player group
                 this.playerGroup.add(this.model);
 
-                // Set initial position of the player group
                 this.playerGroup.position.set(
                     this.lanes[this.currentLane],
                     this.GROUND_LEVEL,
                     this.position.z
                 );
 
-                // Add player group to the scene
                 this.scene.add(this.playerGroup);
             },
             (xhr) => {
