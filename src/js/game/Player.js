@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 export class Player {
     constructor(scene, position = { x: 0, y: 0, z: 4 }) {
@@ -7,8 +8,8 @@ export class Player {
 
         // Konstanta fisika
         this.GROUND_LEVEL = 1;
-        this.JUMP_HEIGHT = 3.5;
-        this.JUMP_DURATION = 0.5;
+        this.JUMP_HEIGHT = 5;
+        this.JUMP_DURATION = 1.5;
         this.gravity = -(2 * this.JUMP_HEIGHT) / Math.pow(this.JUMP_DURATION / 2, 2);
         this.jumpForce = -this.gravity * (this.JUMP_DURATION / 2);
         
@@ -37,40 +38,40 @@ export class Player {
         // Group utama untuk player
         this.playerGroup = new THREE.Group();
 
-        // Body player
-        const bodyGeometry = new THREE.BoxGeometry(1, 1.5, 1);
-        const bodyMaterial = new THREE.MeshPhongMaterial({
-            color: 0x00ff00,
-            specular: 0x009900,
-            shininess: 30
-        });
-        this.body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        this.body.castShadow = true;
+        // Load custom 3D model
+        const loader = new GLTFLoader();
+        loader.load(
+            "/src/assets/alien.glb", // Replace with your model file path
+            (gltf) => {
+                this.model = gltf.scene;
 
-        // Head player
-        const headGeometry = new THREE.SphereGeometry(0.4, 16, 16);
-        const headMaterial = new THREE.MeshPhongMaterial({
-            color: 0x00dd00,
-            specular: 0x009900,
-            shininess: 30
-        });
-        this.head = new THREE.Mesh(headGeometry, headMaterial);
-        this.head.position.y = 1;
-        this.head.castShadow = true;
+                // Adjust model's scale, position, and shadow
+                this.model.scale.set(1.5, 1.5, 1.5); // Adjust as needed
+                this.model.position.y = 0; // Align with ground
+                this.model.castShadow = true;
 
-        // Add meshes ke group
-        this.playerGroup.add(this.body);
-        this.playerGroup.add(this.head);
+                this.model.rotation.y = Math.PI;
 
-        // Set posisi awal
-        this.playerGroup.position.set(
-            this.lanes[this.currentLane],
-            this.GROUND_LEVEL,
-            this.position.z
+                // Add model to player group
+                this.playerGroup.add(this.model);
+
+                // Set initial position of the player group
+                this.playerGroup.position.set(
+                    this.lanes[this.currentLane],
+                    this.GROUND_LEVEL,
+                    this.position.z
+                );
+
+                // Add player group to the scene
+                this.scene.add(this.playerGroup);
+            },
+            (xhr) => {
+                console.log((xhr.loaded / xhr.total) * 100 + "% loaded");
+            },
+            (error) => {
+                console.error("An error occurred while loading the model", error);
+            }
         );
-
-        // Add ke scene
-        this.scene.add(this.playerGroup);
     }
 
     createEffects() {
