@@ -19,10 +19,21 @@
       </div>
 
       <div id="menu-screen" class="hidden">
-        <h1>Dark Corridor</h1>
-        <div class="button-container">
-          <button id="start-button">Enter</button>
-          <button id="instructions-button">Controls</button>
+        <div class="menu-container">
+          <h1>Dark Corridor</h1>
+          <div class="menu-buttons">
+            <button id="start-button" class="menu-button primary">PLAY</button>
+            <div class="highscore-section">
+              <h2>HIGH SCORES</h2>
+              <div class="highscore-list">
+                <div class="score-entry"></div>
+                <div class="score-entry"></div>
+              </div>
+            </div>
+            <button id="instructions-button" class="menu-button secondary">
+              CONTROL
+            </button>
+          </div>
         </div>
       </div>
 
@@ -32,9 +43,23 @@
       </div>
 
       <div id="game-over" class="hidden">
-        <h2>Game Over</h2>
-        <p>Final Distance: <span id="final-score">0</span></p>
-        <button id="restart-button">Try Again</button>
+        <div class="game-over-container">
+          <div class="game-over-content">
+            <h2 class="game-over-title">Game Over</h2>
+            <div class="score-display">
+              <span>Final Distance</span>
+              <div class="final-score" id="final-score">0</div>
+            </div>
+            <div class="game-over-buttons">
+              <button id="restart-button" class="game-button primary">
+                Try Again
+              </button>
+              <button id="back-to-menu-button" class="game-button secondary">
+                Back to Menu
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="instructions-modal" class="modal hidden">

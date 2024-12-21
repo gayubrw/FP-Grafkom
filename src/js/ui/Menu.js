@@ -24,6 +24,13 @@ export class Menu {
         this.hideInstructions();
       }
     });
+
+    // Reset game state when returning to menu
+    this.onBackToMenu = null;
+  }
+
+  setBackToMenuHandler(handler) {
+    this.onBackToMenu = handler;
   }
 
   showInstructions() {
@@ -51,5 +58,15 @@ export class Menu {
     this.gameUI.classList.add("hidden");
     this.gameOver.classList.remove("hidden");
     document.getElementById("final-score").textContent = finalScore;
+
+    // Add event listener for back to menu button
+    const backToMenuButton = document.getElementById("back-to-menu-button");
+    const handleBackToMenu = () => {
+      if (this.onBackToMenu) {
+        this.onBackToMenu();
+      }
+      backToMenuButton.removeEventListener("click", handleBackToMenu);
+    };
+    backToMenuButton.addEventListener("click", handleBackToMenu);
   }
 }
