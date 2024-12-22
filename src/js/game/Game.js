@@ -25,6 +25,7 @@ export class Game {
     // Game state
     this.obstacles = [];
     this.isGameRunning = false;
+    this.isPaused = false;
     this.nextSpawnZ = -100;
     this.difficultyLevel = 1;
 
@@ -73,8 +74,95 @@ export class Game {
       torches: [],
     };
 
+    // Create pause screen
+    this.createPauseScreen();
+
+    // Bind event handlers
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+    document.addEventListener('keydown', this.handleKeyPress);
+
     // Initialize game
     this.init();
+  }
+
+  createPauseScreen() {
+    this.pauseScreen = document.createElement('div');
+    this.pauseScreen.id = 'pause-screen';
+    this.pauseScreen.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    `;
+
+    const menuContent = document.createElement('div');
+    menuContent.style.cssText = `
+      background-color: #333;
+      padding: 2rem;
+      border-radius: 10px;
+      text-align: center;
+      color: white;
+    `;
+
+    const title = document.createElement('h2');
+    title.textContent = 'Game Paused';
+    title.style.marginBottom = '1rem';
+
+    const instructions = document.createElement('p');
+    instructions.textContent = 'Press ENTER to continue';
+    instructions.style.fontSize = '1.2rem';
+
+    menuContent.appendChild(title);
+    menuContent.appendChild(instructions);
+    this.pauseScreen.appendChild(menuContent);
+    document.body.appendChild(this.pauseScreen);
+  }
+
+  handleKeyPress(event) {
+    if (!this.isGameRunning) return;
+
+    if (event.key === 'Escape') {
+      this.togglePause();
+    } else if (event.key === 'Enter' && this.isPaused) {
+      this.resumeGame();
+    }
+  }
+
+  togglePause() {
+    if (this.isPaused) {
+      this.resumeGame();
+    } else {
+      this.pauseGame();
+    }
+  }
+
+  pauseGame() {
+    if (!this.isGameRunning || this.isPaused) return;
+    
+    this.isPaused = true;
+    this.pauseScreen.style.display = 'flex';
+    
+    // Store the current time when pausing
+    this.pauseTime = performance.now();
+  }
+
+  resumeGame() {
+    if (!this.isGameRunning || !this.isPaused) return;
+    
+    this.isPaused = false;
+    this.pauseScreen.style.display = 'none';
+    
+    // Adjust the previous time to account for the pause duration
+    if (this.pauseTime) {
+      const pauseDuration = performance.now() - this.pauseTime;
+      this.prevTime += pauseDuration;
+    }
   }
 
   init() {
@@ -117,6 +205,10 @@ export class Game {
   }
 
   backToMenu() {
+    // Reset pause state
+    this.isPaused = false;
+    this.pauseScreen.style.display = 'none';
+
     // Reset game state
     this.isGameRunning = false;
 
@@ -286,7 +378,7 @@ export class Game {
     this.scene.add(torchGroup);
 
     const animate = () => {
-      if (this.isGameRunning) {
+      if (this.isGameRunning && !this.isPaused) {
         torchLight.intensity = 1.5 + Math.random() * 1;
       }
       requestAnimationFrame(animate);
@@ -418,6 +510,8 @@ export class Game {
   }
 
   updateEnvironment() {
+    if (this.isPaused) return;
+
     const moveAndReset = (obj, resetDistance, speedFactor = 1) => {
       const speed = obj.isGround ? this.groundSpeed : this.environmentSpeed;
       obj.position.z += speed * speedFactor;
@@ -457,7 +551,7 @@ export class Game {
   }
 
   spawnObstacle() {
-    if (!this.isGameRunning) return;
+    if (!this.isGameRunning || this.isPaused) return;
 
     const now = performance.now();
 
@@ -486,13 +580,10 @@ export class Game {
       // Select new pattern based on difficulty
       let availablePatterns;
       if (this.difficultyLevel === 1) {
-        // Easy patterns (single obstacles)
         availablePatterns = this.spawnPatterns.slice(0, 3);
       } else if (this.difficultyLevel === 2) {
-        // Medium patterns (single + alternating)
         availablePatterns = this.spawnPatterns.slice(0, 5);
       } else {
-        // All patterns available
         availablePatterns = this.spawnPatterns;
       }
 
@@ -533,7 +624,7 @@ export class Game {
     );
     const difficultyReduction = this.difficultyLevel - 1;
     const currentSpawnInterval = Math.max(
-      6, // Minimum spawn interval
+      6,
       baseSpawnInterval - distanceReduction - difficultyReduction
     );
 
@@ -554,15 +645,15 @@ export class Game {
   }
 
   updateDistance() {
+    if (this.isPaused) return;
+
     this.lastDistanceUpdate += this.deltaTime;
     if (this.lastDistanceUpdate >= this.distanceUpdateInterval) {
-      // Calculate distance traveled (negative because we're moving in -Z direction)
       this.distanceTraveled -=
         this.environmentSpeed * this.lastDistanceUpdate * 10;
       this.scoreManager.updateDistance(this.distanceTraveled);
       this.lastDistanceUpdate = 0;
 
-      // Update difficulty based on distance
       if (Math.abs(this.distanceTraveled) >= 300) {
         this.difficultyLevel = 3;
       } else if (Math.abs(this.distanceTraveled) >= 150) {
@@ -572,7 +663,7 @@ export class Game {
   }
 
   update() {
-    if (!this.isGameRunning) return;
+    if (!this.isGameRunning || this.isPaused) return;
 
     // Update environment movement
     this.updateEnvironment();
@@ -610,6 +701,8 @@ export class Game {
 
   async gameOver() {
     this.isGameRunning = false;
+    this.isPaused = false;
+    this.pauseScreen.style.display = 'none';
 
     // Check for high score and get player name if needed
     await this.scoreManager.checkAndUpdateHighScores();
@@ -620,6 +713,7 @@ export class Game {
 
   start() {
     this.isGameRunning = true;
+    this.isPaused = false;
     this.scoreManager.resetScore();
     this.distanceTraveled = 0;
     this.lastDistanceUpdate = 0;
@@ -672,6 +766,10 @@ export class Game {
     // Reset player
     this.player.reset();
 
+    // Reset pause state
+    this.isPaused = false;
+    this.pauseScreen.style.display = 'none';
+
     // Reset distance and spawn system
     this.distanceTraveled = 0;
     this.lastDistanceUpdate = 0;
@@ -685,6 +783,13 @@ export class Game {
     this.start();
   }
 
+  cleanup() {
+    document.removeEventListener('keydown', this.handleKeyPress);
+    if (this.pauseScreen && this.pauseScreen.parentNode) {
+      this.pauseScreen.parentNode.removeChild(this.pauseScreen);
+    }
+  }
+
   animate(time) {
     requestAnimationFrame(this.animate.bind(this));
 
@@ -693,10 +798,12 @@ export class Game {
     this.deltaTime = (time - this.prevTime) / 1000;
     this.prevTime = time;
 
-    // Update game state
-    this.update();
+    // Update game state if not paused
+    if (!this.isPaused) {
+      this.update();
+    }
 
-    // Render scene
+    // Always render scene
     this.renderer.render(this.scene, this.camera);
   }
 }
