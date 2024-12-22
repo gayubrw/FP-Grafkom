@@ -209,10 +209,9 @@ export class Game {
 
   setupEnvironment() {
     // Scene background and fog
-    this.scene.background = new THREE.Color(0x87ceeb);
-    this.scene.fog = new THREE.Fog(0x87ceeb, 10, 100);
+    this.scene.background = new THREE.Color(0x000000);
+    this.scene.fog = new THREE.Fog(0x000000, 10, 100);
 
-    // Temple walls
     const wallGeometry = new THREE.BoxGeometry(2, 10, 50, 1, 5, 20);
     const wallMaterial = new THREE.MeshPhongMaterial({
       color: 0xa0a0a0,

@@ -1,4 +1,4 @@
-# Dark Corridor Game
+# Space Corridor Game
 
 A 3D endless runner game built with Three.js where players navigate through a dark corridor, avoiding obstacles and trying to achieve the highest score.
 
@@ -29,7 +29,7 @@ A 3D endless runner game built with Three.js where players navigate through a da
 ## Project Structure
 
 ```
-dark-corridor/
+space-corridor/
 │
 ├── src/
 │   ├── assets/
@@ -67,7 +67,7 @@ dark-corridor/
 1. Clone the repository:
 ```bash
 git clone [repository-url]
-cd dark-corridor
+cd space-corridor
 ```
 
 2. Install dependencies:
@@ -87,7 +87,7 @@ npm run build
 
 ## Gameplay
 
-- Navigate through a dark corridor
+- Navigate through a corridor
 - Avoid obstacles by moving left, right, or jumping
 - Score increases as you progress
 - Game ends when hitting an obstacle
